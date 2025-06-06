@@ -8,14 +8,14 @@ struct Atom {
   double x, y, z;
 };
 
-struct SimulationInfo {
+struct SystemInfo {
   int atoms;         // 原子数
   double LX, LY, LZ; // シミュレーションボックスのサイズ
 };
 
-SimulationInfo read_info(const std::string filename) {
+SystemInfo read_info(const std::string filename) {
   std::ifstream file(filename);
-  SimulationInfo info;
+  SystemInfo info;
 
   if (!file.is_open()) {
     std::cerr << "ファイルを開けませんでした: " << filename << std::endl;
