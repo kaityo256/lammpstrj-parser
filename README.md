@@ -25,6 +25,7 @@ This is a single-header library. Simply copy the header file into your project a
 int main() {
   lammpstrj::SystemInfo si = lammpstrj::read_info("simple.lammpstrj");
   printf("(LX, LY, LZ) = (%f, %f, %f)\n", si.LX, si.LY, si.LZ);
+  printf("N = %d\n", si.atoms);
 }
 ```
 

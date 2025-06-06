@@ -11,17 +11,17 @@ struct Atom {
 };
 
 struct SystemInfo {
-  int atoms;         // 原子数
-  double LX, LY, LZ; // シミュレーションボックスのサイズ
+  int atoms;         // Number of atoms
+  double LX, LY, LZ; // Size of the simulation box
 };
 
 SystemInfo read_info(const std::string filename) {
   std::ifstream file(filename);
-  SystemInfo info;
+  SystemInfo info{};
 
   if (!file.is_open()) {
-    std::cerr << "ファイルを開けませんでした: " << filename << std::endl;
-    return info; // 初期値を返す
+    std::cerr << "Failed to open file: " << filename << std::endl;
+    return info;
   }
 
   std::string line;
@@ -31,31 +31,30 @@ SystemInfo read_info(const std::string filename) {
   while (std::getline(file, line)) {
     if (!atoms_found &&
         line.find("ITEM: NUMBER OF ATOMS") != std::string::npos) {
-      // 次の行に原子数がある
       std::getline(file, line);
       info.atoms = std::stoi(line);
       atoms_found = true;
     }
 
     if (!box_found && line.find("ITEM: BOX BOUNDS") != std::string::npos) {
-      // 次の3行でボックスサイズ情報
+      // The next 3 lines contain the box size information
       double x_min, x_max, y_min, y_max, z_min, z_max;
       std::getline(file, line);
       std::istringstream(line) >> x_min >> x_max;
-      info.LX = x_max - x_min; // X方向のサイズ
+      info.LX = x_max - x_min; // Size in X direction
 
       std::getline(file, line);
       std::istringstream(line) >> y_min >> y_max;
-      info.LY = y_max - y_min; // Y方向のサイズ
+      info.LY = y_max - y_min; // Size in Y direction
 
       std::getline(file, line);
       std::istringstream(line) >> z_min >> z_max;
-      info.LZ = z_max - z_min; // Z方向のサイズ
+      info.LZ = z_max - z_min; // Size in Z direction
 
       box_found = true;
     }
 
-    // 必要な情報を取得したら処理を終了
+    // Exit loop once required information has been found
     if (atoms_found && box_found) {
       break;
     }
@@ -65,4 +64,4 @@ SystemInfo read_info(const std::string filename) {
   return info;
 }
 
-}
+} // namespace lammpstrj
