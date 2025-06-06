@@ -3,6 +3,8 @@
 #include <sstream>
 #include <string>
 
+namespace lammpstrj {
+
 struct Atom {
   int type;
   double x, y, z;
@@ -61,4 +63,6 @@ SystemInfo read_info(const std::string filename) {
 
   file.close();
   return info;
+}
+
 }
