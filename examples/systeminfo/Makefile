@@ -7,13 +7,13 @@ all: a.out
 a.out: systeminfo.cpp
 	$(CXX) $(CXXFLAGS) systeminfo.cpp -o a.out
 
-run: a.out simple.lammpstrj 
+run: a.out systeminfo.lammpstrj 
 	./a.out
 
-simple.lammpstrj:
-	$(LAMMPS) < simple.input
+systeminfo.lammpstrj:
+	$(LAMMPS) < systeminfo.input
 
 .PHONY: clean
 
 clean:
-	rm -f a.out log.lammps simple.lammpstrj
+	rm -f a.out log.lammps *.lammpstrj
