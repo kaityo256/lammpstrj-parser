@@ -16,16 +16,28 @@ A lightweight single-header C++ library for parsing LAMMPS trajectory files (`*.
 
 This is a single-header library. Simply copy the header file into your project and include it:
 
-### Example
+### Examples
 
 ```cpp
 #include <cstdio>
 #include <lammpstrj/lammpstrj.hpp>
 
-int main() {
-  lammpstrj::SystemInfo si = lammpstrj::read_info("simple.lammpstrj");
-  printf("(LX, LY, LZ) = (%f, %f, %f)\n", si.LX, si.LY, si.LZ);
-  printf("N = %d\n", si.atoms);
+int main(int argc, char *argv[]) {
+  if (argc != 2) {
+    std::cerr << "Usage: " << argv[0] << " input.lammpstrj" << std::endl;
+    return 1;
+  }
+
+  std::string filename = argv[1];
+  auto si = lammpstrj::read_info(filename);
+  if (!si) {
+    std::cerr << "Error: Could not read file: " << filename << std::endl;
+    return 1;
+  }
+
+  printf("(LX, LY, LZ) = (%f, %f, %f)\n", si->LX, si->LY, si->LZ);
+  printf("N = %d\n", si->atoms);
+  return 0;
 }
 ```
 

@@ -8,8 +8,13 @@ int main(int argc, char *argv[]) {
   }
 
   std::string filename = argv[1];
-  lammpstrj::SystemInfo si = lammpstrj::read_info(filename);
-  printf("(LX, LY, LZ) = (%f, %f, %f)\n", si.LX, si.LY, si.LZ);
-  printf("N = %d\n", si.atoms);
+  auto si = lammpstrj::read_info(filename);
+  if (!si) {
+    std::cerr << "Error: Could not read file: " << filename << std::endl;
+    return 1;
+  }
+
+  printf("(LX, LY, LZ) = (%f, %f, %f)\n", si->LX, si->LY, si->LZ);
+  printf("N = %d\n", si->atoms);
   return 0;
 }

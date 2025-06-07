@@ -1,6 +1,6 @@
 LAMMPS = lmp_serial
 CXX = g++
-CXXFLAGS = -std=c++11 -I../../include
+CXXFLAGS = -std=c++14 -I../../include
 
 all: a.out
 

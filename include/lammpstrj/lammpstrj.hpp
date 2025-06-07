@@ -2,6 +2,7 @@
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <unordered_map>
@@ -20,13 +21,12 @@ struct SystemInfo {
   double LX, LY, LZ; // Size of the simulation box
 };
 
-SystemInfo read_info(const std::string filename) {
+std::unique_ptr<SystemInfo> read_info(const std::string filename) {
   std::ifstream file(filename);
-  SystemInfo info{};
+  auto si = std::make_unique<SystemInfo>();
 
   if (!file.is_open()) {
-    std::cerr << "Failed to open file: " << filename << std::endl;
-    return info;
+    return nullptr;
   }
 
   std::string line;
@@ -37,7 +37,7 @@ SystemInfo read_info(const std::string filename) {
     if (!atoms_found &&
         line.find("ITEM: NUMBER OF ATOMS") != std::string::npos) {
       std::getline(file, line);
-      info.atoms = std::stoi(line);
+      si->atoms = std::stoi(line);
       atoms_found = true;
     }
 
@@ -46,15 +46,15 @@ SystemInfo read_info(const std::string filename) {
       double x_min, x_max, y_min, y_max, z_min, z_max;
       std::getline(file, line);
       std::istringstream(line) >> x_min >> x_max;
-      info.LX = x_max - x_min; // Size in X direction
+      si->LX = x_max - x_min; // Size in X direction
 
       std::getline(file, line);
       std::istringstream(line) >> y_min >> y_max;
-      info.LY = y_max - y_min; // Size in Y direction
+      si->LY = y_max - y_min; // Size in Y direction
 
       std::getline(file, line);
       std::istringstream(line) >> z_min >> z_max;
-      info.LZ = z_max - z_min; // Size in Z direction
+      si->LZ = z_max - z_min; // Size in Z direction
 
       box_found = true;
     }
@@ -66,13 +66,16 @@ SystemInfo read_info(const std::string filename) {
   }
 
   file.close();
-  return info;
+  return si;
 }
 
-void for_each_frame(const std::string &filename, std::function<void(const lammpstrj::SystemInfo &is, std::vector<lammpstrj::Atom> &)> callback) {
+using FrameCallback = std::function<void(const std::unique_ptr<lammpstrj::SystemInfo> &,
+                                         std::vector<lammpstrj::Atom> &)>;
 
-  SystemInfo si = read_info(filename);
-  const int N = si.atoms;
+void for_each_frame(const std::string &filename, std::function<void(const std::unique_ptr<SystemInfo> &is, std::vector<lammpstrj::Atom> &)> callback) {
+
+  auto si = read_info(filename);
+  const int N = si->atoms;
 
   std::ifstream fin(filename);
   if (!fin.is_open()) {
@@ -142,17 +145,17 @@ void for_each_frame(const std::string &filename, std::function<void(const lammps
         if (field_indices.count("z")) atom.z = std::stod(tokens[field_indices["z"]]);
 
         // xs, ys, zs（with scaling)
-        if (field_indices.count("xs")) atom.x = std::stod(tokens[field_indices["xs"]]) * si.LX;
-        if (field_indices.count("ys")) atom.y = std::stod(tokens[field_indices["ys"]]) * si.LY;
-        if (field_indices.count("zs")) atom.z = std::stod(tokens[field_indices["zs"]]) * si.LZ;
+        if (field_indices.count("xs")) atom.x = std::stod(tokens[field_indices["xs"]]) * si->LX;
+        if (field_indices.count("ys")) atom.y = std::stod(tokens[field_indices["ys"]]) * si->LY;
+        if (field_indices.count("zs")) atom.z = std::stod(tokens[field_indices["zs"]]) * si->LZ;
 
         // Periodic boundary correction
-        if (atom.x < 0) atom.x += si.LX;
-        if (atom.x > si.LX) atom.x -= si.LX;
-        if (atom.y < 0) atom.y += si.LY;
-        if (atom.y > si.LY) atom.y -= si.LY;
-        if (atom.z < 0) atom.z += si.LZ;
-        if (atom.z > si.LZ) atom.z -= si.LZ;
+        if (atom.x < 0) atom.x += si->LX;
+        if (atom.x > si->LX) atom.x -= si->LX;
+        if (atom.y < 0) atom.y += si->LY;
+        if (atom.y > si->LY) atom.y -= si->LY;
+        if (atom.z < 0) atom.z += si->LZ;
+        if (atom.z > si->LZ) atom.z -= si->LZ;
 
         if (field_indices.count("vx")) atom.vx = std::stod(tokens[field_indices["vx"]]);
         if (field_indices.count("vy")) atom.vy = std::stod(tokens[field_indices["vy"]]);
