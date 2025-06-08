@@ -16,4 +16,4 @@ condensation.lammpstrj:
 .PHONY: clean
 
 clean:
-	rm -f a.out log.lammps *.lammpstrj
+	rm -f a.out log.lammps *.lammpstrj *.vtk

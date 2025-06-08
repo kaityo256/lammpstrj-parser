@@ -1,7 +1,10 @@
 #include <cassert>
 #include <cmath>
 #include <cstdio>
+#include <iomanip>
 #include <lammpstrj/lammpstrj.hpp>
+#include <sstream>
+#include <string>
 
 class LocalDensityCalculator {
 
@@ -40,6 +43,39 @@ public:
     index++;
   }
 
+  void write_vtk(const std::string &filename, int nx, int ny, int nz, const std::vector<double> &data) {
+    if (data.size() != static_cast<size_t>(nx * ny * nz)) {
+      std::cerr << "Error: data size does not match grid dimensions." << std::endl;
+      return;
+    }
+
+    std::ofstream ofs(filename);
+    if (!ofs) {
+      std::cerr << "Error: Could not open file for writing: " << filename << std::endl;
+      return;
+    }
+
+    ofs << "# vtk DataFile Version 1.0\n";
+    ofs << "test\n";
+    ofs << "ASCII\n";
+    ofs << "DATASET STRUCTURED_POINTS\n";
+    ofs << "DIMENSIONS " << nx << " " << ny << " " << nz << "\n";
+    ofs << "ORIGIN 0.0 0.0 0.0\n";
+    ofs << "SPACING 1.0 1.0 1.0\n";
+    ofs << "\n";
+    ofs << "POINT_DATA " << nx * ny * nz << "\n";
+    ofs << "\n";
+    ofs << "SCALARS intensity float\n";
+    ofs << "LOOKUP_TABLE default\n";
+
+    for (double v : data) {
+      ofs << v << "\n";
+    }
+
+    ofs.close();
+    std::cout << filename << std::endl;
+  }
+
   void calc_density(const std::unique_ptr<lammpstrj::SystemInfo> &si,
                     std::vector<lammpstrj::Atom> &atoms) {
     // セル数（切り上げ）
@@ -74,7 +110,12 @@ public:
     for (auto &d : density) {
       d /= cell_volume;
     }
-    printf("%f %f\n", mesh_size_, mx);
+    static int index = 0;
+    std::ostringstream oss;
+    oss << "density." << std::setfill('0') << std::setw(4) << index << ".vtk";
+    index++;
+    std::string filename = oss.str();
+    write_vtk(filename, nx, ny, nz, density);
   }
 
   void calculate() {
