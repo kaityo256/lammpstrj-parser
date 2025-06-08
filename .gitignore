@@ -1,3 +1,4 @@
 a.out
 log.lammps
 *.lammpstrj
+*.vtk
