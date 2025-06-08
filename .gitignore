@@ -1,3 +1,5 @@
 a.out
 log.lammps
 *.lammpstrj
+slurm-*.out
+*.sh
