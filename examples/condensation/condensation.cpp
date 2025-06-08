@@ -1,3 +1,5 @@
+#include <cassert>
+#include <cmath>
 #include <cstdio>
 #include <lammpstrj/lammpstrj.hpp>
 
@@ -5,10 +7,10 @@ class LocalDensityCalculator {
 
 private:
   std::string filename_;
-  double mesh_size_;
+  const double mesh_size_;
   lammpstrj::SystemInfo system_info_;
   LocalDensityCalculator(const double mesh_size, const std::string &filename, const lammpstrj::SystemInfo &si)
-      : system_info_(si) {
+      : system_info_(si), mesh_size_(mesh_size) {
     filename_ = filename;
   }
 
@@ -38,10 +40,47 @@ public:
     index++;
   }
 
+  void calc_density(const std::unique_ptr<lammpstrj::SystemInfo> &si,
+                    std::vector<lammpstrj::Atom> &atoms) {
+    // セル数（切り上げ）
+    const int nx = static_cast<int>(std::ceil(si->LX / mesh_size_));
+    const int ny = static_cast<int>(std::ceil(si->LY / mesh_size_));
+    const int nz = static_cast<int>(std::ceil(si->LZ / mesh_size_));
+    const int total_cells = nx * ny * nz;
+
+    // 実際のセルサイズ
+    const double mx = si->LX / static_cast<double>(nx);
+    const double my = si->LY / static_cast<double>(ny);
+    const double mz = si->LZ / static_cast<double>(nz);
+    const double mx_inv = 1.0 / mx;
+    const double my_inv = 1.0 / my;
+    const double mz_inv = 1.0 / mz;
+    // 初期化
+    std::vector<double> density;
+    density.assign(total_cells, 0.0);
+
+    // 各原子を対応するセルに割り当ててカウント
+    for (const auto &atom : atoms) {
+      int ix = static_cast<int>(atom.x * mx_inv);
+      int iy = static_cast<int>(atom.y * my_inv);
+      int iz = static_cast<int>(atom.z * mz_inv);
+
+      int index = ix + nx * (iy + ny * iz);
+      density[index] += 1.0;
+    }
+
+    // 密度に変換（個数密度: 個数 / セル体積）
+    const double cell_volume = mx * my * mz;
+    for (auto &d : density) {
+      d /= cell_volume;
+    }
+    printf("%f %f\n", mesh_size_, mx);
+  }
+
   void calculate() {
     lammpstrj::for_each_frame(filename_,
                               [this](const std::unique_ptr<lammpstrj::SystemInfo> &si, std::vector<lammpstrj::Atom> &atoms) {
-                                this->calc_temperature(si, atoms);
+                                this->calc_density(si, atoms);
                               });
   }
 };
@@ -51,7 +90,7 @@ int main(int argc, char *argv[]) {
     std::cerr << "Usage: " << argv[0] << " input.lammpstrj" << std::endl;
     return 1;
   }
-  double mesh_size = 1.0;
+  double mesh_size = 2.0;
   std::string filename = argv[1];
   auto calculator = LocalDensityCalculator::create(mesh_size, filename);
   if (!calculator) {

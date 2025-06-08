@@ -12,6 +12,7 @@ namespace lammpstrj {
 
 struct Atom {
   int type = 0;
+  int id = 0;
   double x = 0.0, y = 0.0, z = 0.0;
   double vx = 0.0, vy = 0.0, vz = 0.0;
 };
@@ -136,6 +137,7 @@ void for_each_frame(const std::string &filename, std::function<void(const std::u
 
         Atom atom;
         int id = std::stoi(tokens[field_indices["id"]]);
+        atom.id = id;
 
         if (field_indices.count("type")) atom.type = std::stoi(tokens[field_indices["type"]]);
 
