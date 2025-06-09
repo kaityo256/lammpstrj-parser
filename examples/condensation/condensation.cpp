@@ -128,9 +128,13 @@ public:
     for (int i = 0; i < total_cells; i++) {
       cluster[i] = find(i, cluster);
     }
-    std::unordered_set<int> unique_values(cluster.begin(), cluster.end());
-    const int cluster_number = unique_values.size();
-    printf("%d %d\n", frame_, cluster_number);
+    int num_cluster = 0;
+    for (int i = 0; i < total_cells; i++) {
+      if (cluster[i] == i && density[i] > density_threshold) {
+        num_cluster++;
+      }
+    }
+    printf("%d %d\n", frame_, num_cluster);
   }
 
   void calc_density(const std::unique_ptr<lammpstrj::SystemInfo> &si,
@@ -159,7 +163,9 @@ public:
       int iz = static_cast<int>(atom.z * mz_inv);
 
       int index = ix + nx * (iy + ny * iz);
-      density[index] += 1.0;
+      if (atom.type == 1) {
+        density[index] += 1.0;
+      }
     }
 
     // 密度に変換（個数密度: 個数 / セル体積）
