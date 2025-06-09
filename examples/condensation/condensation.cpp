@@ -3,18 +3,22 @@
 #include <cstdio>
 #include <iomanip>
 #include <lammpstrj/lammpstrj.hpp>
+#include <numeric>
 #include <sstream>
 #include <string>
+#include <unordered_set>
 
 class LocalDensityCalculator {
 
 private:
   std::string filename_;
   const double mesh_size_;
+  int frame_;
   lammpstrj::SystemInfo system_info_;
   LocalDensityCalculator(const double mesh_size, const std::string &filename, const lammpstrj::SystemInfo &si)
       : system_info_(si), mesh_size_(mesh_size) {
     filename_ = filename;
+    frame_ = 0;
   }
 
 public:
@@ -76,6 +80,59 @@ public:
     std::cout << filename << std::endl;
   }
 
+  int pos2index(int ix, int iy, int iz, int nx, int ny, int nz) {
+    if (ix >= nx) ix -= nx;
+    if (iy >= ny) iy -= ny;
+    if (iz >= nz) iz -= nz;
+    return ix + iy * nx + iz * nx * ny;
+  }
+
+  int find(int index, const std::vector<int> &cluster) {
+    while (index != cluster[index]) {
+      index = cluster[index];
+    }
+    return index;
+  }
+
+  void unite(int i1, int i2, const double density_threshold, const std::vector<double> &density, std::vector<int> &cluster) {
+    if (density[i1] < density_threshold) return;
+    if (density[i2] < density_threshold) return;
+    i1 = find(i1, cluster);
+    i2 = find(i2, cluster);
+    if (i1 < i2) {
+      cluster[i2] = i1;
+    } else {
+      cluster[i1] = i2;
+    }
+  }
+
+  void clustering(int nx, int ny, int nz, const std::vector<double> &density) {
+    const int total_cells = nx * ny * nz;
+    std::vector<int> cluster(total_cells);
+    std::iota(cluster.begin(), cluster.end(), 0);
+    const double density_threshold = 0.3;
+    for (int iz = 0; iz < nz; iz++) {
+      for (int iy = 0; iy < ny; iy++) {
+        for (int ix = 0; ix < nx; ix++) {
+          int i1 = pos2index(ix, iy, iz, nx, ny, nz);
+          int i2 = pos2index(ix + 1, iy, iz, nx, ny, nz);
+          unite(i1, i2, density_threshold, density, cluster);
+          i2 = pos2index(ix, iy + 1, iz, nx, ny, nz);
+          unite(i1, i2, density_threshold, density, cluster);
+          i2 = pos2index(ix, iy, iz + 1, nx, ny, nz);
+          unite(i1, i2, density_threshold, density, cluster);
+        }
+      }
+    }
+    // クラスター数の確認
+    for (int i = 0; i < total_cells; i++) {
+      cluster[i] = find(i, cluster);
+    }
+    std::unordered_set<int> unique_values(cluster.begin(), cluster.end());
+    const int cluster_number = unique_values.size();
+    printf("%d %d\n", frame_, cluster_number);
+  }
+
   void calc_density(const std::unique_ptr<lammpstrj::SystemInfo> &si,
                     std::vector<lammpstrj::Atom> &atoms) {
     // セル数（切り上げ）
@@ -110,12 +167,14 @@ public:
     for (auto &d : density) {
       d /= cell_volume;
     }
-    static int index = 0;
+    /*
     std::ostringstream oss;
-    oss << "density." << std::setfill('0') << std::setw(4) << index << ".vtk";
-    index++;
+    oss << "density." << std::setfill('0') << std::setw(4) << frame_ << ".vtk";
     std::string filename = oss.str();
     write_vtk(filename, nx, ny, nz, density);
+    */
+    clustering(nx, ny, nz, density);
+    frame_++;
   }
 
   void calculate() {
