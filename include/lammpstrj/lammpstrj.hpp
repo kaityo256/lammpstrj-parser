@@ -171,17 +171,17 @@ void for_each_frame(const std::string &filename, std::function<void(const std::u
         if (field_indices.count("z")) atom.z = std::stod(tokens[field_indices["z"]]);
 
         // xs, ys, zs（with scaling)
-        if (field_indices.count("xs")) atom.x = std::stod(tokens[field_indices["xs"]]) * si->LX;
-        if (field_indices.count("ys")) atom.y = std::stod(tokens[field_indices["ys"]]) * si->LY;
-        if (field_indices.count("zs")) atom.z = std::stod(tokens[field_indices["zs"]]) * si->LZ;
+        if (field_indices.count("xs")) atom.x = std::stod(tokens[field_indices["xs"]]) * si->LX + si->x_min;
+        if (field_indices.count("ys")) atom.y = std::stod(tokens[field_indices["ys"]]) * si->LY + si->y_min;
+        if (field_indices.count("zs")) atom.z = std::stod(tokens[field_indices["zs"]]) * si->LZ + si->z_min;
 
         // Periodic boundary correction
-        if (atom.x < 0) atom.x += si->LX;
-        if (atom.x > si->LX) atom.x -= si->LX;
-        if (atom.y < 0) atom.y += si->LY;
-        if (atom.y > si->LY) atom.y -= si->LY;
-        if (atom.z < 0) atom.z += si->LZ;
-        if (atom.z > si->LZ) atom.z -= si->LZ;
+        if (atom.x < si->x_min) atom.x += si->LX;
+        if (atom.x > si->x_max) atom.x -= si->LX;
+        if (atom.y < si->y_min) atom.y += si->LY;
+        if (atom.y > si->y_max) atom.y -= si->LY;
+        if (atom.z < si->z_min) atom.z += si->LZ;
+        if (atom.z > si->z_max) atom.z -= si->LZ;
 
         if (field_indices.count("vx")) atom.vx = std::stod(tokens[field_indices["vx"]]);
         if (field_indices.count("vy")) atom.vy = std::stod(tokens[field_indices["vy"]]);
