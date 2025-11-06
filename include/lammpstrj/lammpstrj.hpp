@@ -1,3 +1,4 @@
+#pragma once
 // lammpstrj.hpp
 //
 // Copyright (c) 2025 H. Watanabe
