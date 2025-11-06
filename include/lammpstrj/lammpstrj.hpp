@@ -70,16 +70,16 @@ std::unique_ptr<SystemInfo> read_info(const std::string filename) {
     if (!box_found && line.find("ITEM: BOX BOUNDS") != std::string::npos) {
       // The next 3 lines contain the box size information
       std::getline(file, line);
-      std::istringstream(line) >> x_min >> x_max;
-      si->LX = x_max - x_min; // Size in X direction
+      std::istringstream(line) >> si->x_min >> si->x_max;
+      si->LX = si->x_max - si->x_min; // Size in X direction
 
       std::getline(file, line);
-      std::istringstream(line) >> y_min >> y_max;
-      si->LY = y_max - y_min; // Size in Y direction
+      std::istringstream(line) >> si->y_min >> si->y_max;
+      si->LY = si->y_max - si->y_min; // Size in Y direction
 
       std::getline(file, line);
-      std::istringstream(line) >> z_min >> z_max;
-      si->LZ = z_max - z_min; // Size in Z direction
+      std::istringstream(line) >> si->z_min >> si->z_max;
+      si->LZ = si->z_max - si->z_min; // Size in Z direction
 
       box_found = true;
     }
