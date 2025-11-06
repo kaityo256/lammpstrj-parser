@@ -42,7 +42,8 @@ struct Atom {
 };
 
 struct SystemInfo {
-  int atoms;         // Number of atoms
+  int atoms; // Number of atoms
+  double x_min, x_max, y_min, y_max, z_min, z_max;
   double LX, LY, LZ; // Size of the simulation box
 };
 
@@ -68,7 +69,6 @@ std::unique_ptr<SystemInfo> read_info(const std::string filename) {
 
     if (!box_found && line.find("ITEM: BOX BOUNDS") != std::string::npos) {
       // The next 3 lines contain the box size information
-      double x_min, x_max, y_min, y_max, z_min, z_max;
       std::getline(file, line);
       std::istringstream(line) >> x_min >> x_max;
       si->LX = x_max - x_min; // Size in X direction
